@@ -35,7 +35,10 @@ function App() {
       .map((menuItem, index) => {
         return `
         <li data-menu-id="${index}" class="menu-list-item d-flex items-center py-2">
-          <span class="w-100 pl-2 menu-name">${menuItem.name}</span>
+          <span class="w-100 pl-2 menu-name ${
+            menuItem.soldOut ? "sold-out" : ""
+          }">${menuItem.name}</span>
+          <button type="button" class="bg-gray-50 text-gray-500 text-sm mr-1 menu-sold-out-button">품절</button>
           <button type="button" class="bg-gray-50 text-gray-500 text-sm mr-1 menu-edit-button">수정</button>
           <button type="button" class="bg-gray-50 text-gray-500 text-sm menu-remove-button">삭제</button>
         </li>`;
@@ -67,7 +70,6 @@ function App() {
     const updatedMenuName = prompt("메뉴명을 수정하세요", $menuName.innerText);
     this.menu[this.currentCategory][menuId].name = updatedMenuName;
     store.setLocalStorage(this.menu);
-    $menuName.innerText = updatedMenuName;
   };
   const removeMenuName = (e) => {
     if (confirm("정말 삭제하시겠습니까?")) {
@@ -78,12 +80,30 @@ function App() {
       updateMenuCount();
     }
   };
+  const soldOutMenu = (e) => {
+    const menuId = e.target.closest("li").dataset.menuId;
+    // 처음 값을 정해주지 않았기에 undefinde로 나오는데 그 때 반대는 true값으로 반환이 된다.
+    //만약 다시 한번 클릭시 true에서 false로 변환이 된다.
+    this.menu[this.currentCategory][menuId].soldOut =
+      !this.menu[this.currentCategory][menuId].soldOut;
+    store.setLocalStorage(this.menu);
+    render();
+  };
   $("#menu-list").addEventListener("click", (e) => {
+    // if문이 여러개일 경우 그 뒤의 함수는 굳이 실행을 할 필요가 없는 경우라
+    // if문이 끝난 후에 retrun을 넣어주는 것이 좋다.
+    // 즉 해다하는 if문만 연산을 진행하고 불필요한 과정을 생략할 수 있다.
     if (e.target.classList.contains("menu-edit-button")) {
       updateMenuName(e);
+      return;
     }
     if (e.target.classList.contains("menu-remove-button")) {
       removeMenuName(e);
+      return;
+    }
+    if (e.target.classList.contains("menu-sold-out-button")) {
+      soldOutMenu(e);
+      return;
     }
   });
   $("#menu-form").addEventListener("submit", (e) => {
