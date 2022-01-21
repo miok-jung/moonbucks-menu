@@ -17,6 +17,29 @@ import store from "./store/index.js";
 // [] API 통신이 실패하는 경우에 대해 사용자가 알 수 있게 alert으로 예외처리를 진행한다.
 // [] 중복되는 메뉴는 추가할 수 없다.
 
+const BASE_URL = "http://localhost:3000/api";
+
+// 중복코드 -> 하나의 객체로 만들기
+const MenuApi = {
+  // 메소드(인자){}
+  // 메소드 = getAllMenuByCategory, 인자 = category
+  async getAllMenuByCategory(category) {
+    const response = await fetch(`${BASE_URL}/category/${category}/menu`);
+    return response.json();
+  },
+  async createMenu(category, menuName) {
+    await fetch(`${BASE_URL}/category/${category}/menu`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name: menuName }),
+    }).then((response) => {
+      return response.json();
+    });
+  },
+};
+
 function App() {
   // 상태는 변하는 데이터, 이 앱에서 변하는 것이 무엇인가 - 갯수, 메뉴명
   this.menu = {
@@ -27,10 +50,10 @@ function App() {
     desert: [], // 각각의 속성
   };
   this.currentCategory = "espresso";
-  this.init = () => {
-    if (store.getLocalStorage()) {
-      this.menu = store.getLocalStorage();
-    }
+  this.init = async () => {
+    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
+      this.currentCategory
+    );
     render();
     initEventListeners();
   };
@@ -57,14 +80,19 @@ function App() {
 
     $(".menu-count").innerText = `총 ${menuCount}개`;
   };
-  const addMenuName = () => {
+  const addMenuName = async () => {
     if ($("#menu-name").value === "") {
       alert("값을 입력해주세요.");
       return;
     }
     const menuName = $("#menu-name").value;
-    this.menu[this.currentCategory].push({ name: menuName });
-    store.setLocalStorage(this.menu);
+    this.menu[this.currentCategory] = await MenuApi.createMenu(
+      this.currentCategory,
+      menuName
+    );
+    this.menu[this.currentCategory] = await MenuApi.getAllMenuByCategory(
+      this.currentCategory
+    );
     render();
     $("#menu-name").value = "";
   };
